@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free URL to QR Code Generator - Eternal QR</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Convert any URL into a high-quality, permanent QR Code instantly and for free. No expiration, no redirects. Secure and fast QR code generator.">
+    <meta name="keywords" content="url to qr code, free qr code generator, permanent qr code, static qr code, generate qr online, high resolution qr code, unlimited scans">
+    <meta name="author" content="Eternal QR">
+    <link rel="canonical" href="https://free-qr-code-generator.pages.dev/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://free-qr-code-generator.pages.dev/">
+    <meta property="og:title" content="Free URL to QR Code Generator | Eternal QR">
+    <meta property="og:description" content="Create permanent, static QR codes from any URL. Free, fast, and infinite scans.">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:url" content="https://free-qr-code-generator.pages.dev/">
+    <meta name="twitter:title" content="Free URL to QR Code Generator | Eternal QR">
+    <meta name="twitter:description" content="Create permanent, static QR codes from any URL. Free, fast, and infinite scans.">
+    
+    <!-- Structured Data (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Eternal QR Generator",
+      "url": "https://free-qr-code-generator.pages.dev/",
+      "description": "Free tool to convert any URL into a high-quality, permanent QR Code instantly. No expiration date, no hidden redirects.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- QRCode.js Library (Changed to cdnjs for better stability) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        black: '#0a0a0a',
+                        acid: '#D4FF00',
+                        surface: '#171717',
+                        outline: '#333333'
+                    },
+                    fontFamily: {
+                        anton: ['Anton', 'sans-serif'],
+                        mono: ['Space Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --grid-color: rgba(255, 255, 255, 0.03);
+            --acid: #D4FF00;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ededed;
+            overflow-x: hidden;
+        }
+
+        /* Generative Noise Overlay */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Industrial Grid Background */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Brutalist Input Focus Transition */
+        .brutal-input {
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .brutal-input:focus {
+            box-shadow: 8px 8px 0px 0px var(--acid);
+            transform: translate(-4px, -4px);
+        }
+
+        /* Brutalist Button */
+        .brutal-btn {
+            position: relative;
+            transition: all 0.15s ease-out;
+            box-shadow: 4px 4px 0px 0px var(--acid);
+        }
+        .brutal-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px 0px var(--acid);
+        }
+        .brutal-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px var(--acid);
+        }
+
+        /* Scanner Line Animation */
+        .scanner-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .scanner-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--acid);
+            box-shadow: 0 0 10px var(--acid), 0 0 20px var(--acid);
+            opacity: 0.7;
+            animation: scan 3s linear infinite;
+            z-index: 10;
+        }
+
+        @keyframes scan {
+            0% { top: -5%; }
+            50% { top: 105%; }
+            100% { top: -5%; }
+        }
+
+        /* Corner Target Brackets */
+        .target-bracket {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: var(--acid);
+        }
+        .bracket-tl { top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; }
+        .bracket-tr { top: -1px; right: -1px; border-top: 2px solid; border-right: 2px solid; }
+        .bracket-bl { bottom: -1px; left: -1px; border-bottom: 2px solid; border-left: 2px solid; }
+        .bracket-br { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }
+
+        /* Infinite Marquee */
+        .marquee-wrapper {
+            overflow: hidden;
+            white-space: nowrap;
+            border-top: 1px solid var(--outline);
+            border-bottom: 1px solid var(--outline);
+            background: var(--surface);
+        }
+        .marquee-content {
+            display: inline-block;
+            animation: marquee 20s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); border-left: 1px solid var(--outline); }
+        ::-webkit-scrollbar-thumb { background: var(--surface); border: 1px solid var(--outline); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--acid); }
+    </style>
+</head>
+<body class="font-mono text-sm antialiased selection:bg-acid selection:text-black min-h-screen flex flex-col">
+
+    <!-- Ambient Effects -->
+    <div class="noise-overlay"></div>
+    <div class="bg-grid"></div>
+
+    <!-- Top Marquee Warning -->
+    <div class="marquee-wrapper py-2 text-acid uppercase tracking-widest text-xs font-bold w-full relative z-10">
+        <div class="marquee-content" id="marqueeText">
+            <!-- Will be injected by JS -->
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <main class="flex-grow w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-0 relative z-10">
+        
+        <!-- LEFT PANEL: Data Entry -->
+        <section class="lg:col-span-7 border-b lg:border-b-0 lg:border-r border-outline p-6 md:p-12 lg:p-20 flex flex-col justify-center min-h-[50vh]">
+            
+            <div class="mb-4 inline-flex items-center gap-3">
+                <span class="w-3 h-3 bg-acid rounded-full animate-pulse"></span>
+                <span class="uppercase tracking-widest text-xs text-gray-400" id="t-sysOnline"></span>
+            </div>
+
+            <h1 class="font-anton text-6xl md:text-8xl lg:text-9xl tracking-tight leading-[0.9] mb-8 uppercase" id="mainTitle">
+                <!-- Will be injected by JS -->
+            </h1>
+
+            <div class="max-w-xl space-y-8">
+                <p class="text-gray-400 leading-relaxed text-sm md:text-base border-l-2 border-acid pl-4" id="t-desc">
+                    <!-- Will be injected by JS -->
+                </p>
+
+                <div class="relative w-full">
+                    <label for="urlInput" class="block text-xs uppercase tracking-widest text-acid mb-3 font-bold" id="t-inputLabel">
+                        <!-- Will be injected by JS -->
+                    </label>
+                    <div class="relative group">
+                        <input 
+                            type="url" 
+                            id="urlInput" 
+                            placeholder="https://..." 
+                            class="brutal-input w-full bg-surface border-2 border-outline text-white p-5 md:p-6 text-lg md:text-2xl font-mono focus:outline-none focus:border-acid transition-all"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-500 uppercase tracking-wider border-t border-outline pt-6 mt-8">
+                    <div>
+                        <span class="block text-gray-700 mb-1" id="t-statusLabel"></span>
+                        <span class="text-white" id="statusText"></span>
+                    </div>
+                    <div>
+                        <span class="block text-gray-700 mb-1" id="t-encLabel"></span>
+                        <span class="text-acid" id="t-encValue"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: Visual Output -->
+        <section class="lg:col-span-5 bg-[#0d0d0d] p-6 md:p-12 lg:p-20 flex flex-col items-center justify-center relative min-h-[50vh]">
+            
+            <!-- Corner Decals -->
+            <div class="absolute top-6 left-6 text-xs text-gray-600">X: 294.1</div>
+            <div class="absolute bottom-6 right-6 text-xs text-gray-600">Y: 88.0</div>
+
+            <div class="w-full max-w-sm flex flex-col items-center gap-10">
+                
+                <!-- QR Code Display Area -->
+                <div class="relative p-2 w-full aspect-square scanner-container border border-outline bg-black group flex items-center justify-center">
+                    
+                    <!-- Brackets -->
+                    <div class="target-bracket bracket-tl"></div>
+                    <div class="target-bracket bracket-tr"></div>
+                    <div class="target-bracket bracket-bl"></div>
+                    <div class="target-bracket bracket-br"></div>
+                    
+                    <!-- Scanner Animation -->
+                    <div class="scanner-line hidden" id="scannerLine"></div>
+
+                    <!-- Canvas Container -->
+                    <div id="qrContainer" class="w-[85%] h-[85%] flex items-center justify-center opacity-20 transition-opacity duration-500 bg-black">
+                        <!-- Placeholder Pattern -->
+                        <div class="w-full h-full border border-dashed border-gray-800 flex items-center justify-center text-gray-800 font-anton text-4xl text-center leading-none" id="awaitingText">
+                            <!-- Will be injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Actions -->
+                <div class="w-full opacity-50 pointer-events-none transition-all duration-300" id="actionPanel">
+                    <button 
+                        id="downloadBtn" 
+                        class="brutal-btn w-full bg-acid text-black font-bold uppercase tracking-widest py-4 px-6 flex justify-between items-center border-2 border-transparent hover:border-black"
+                    >
+                        <span id="t-btnText"></span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                    <p class="text-center text-xs text-gray-500 mt-4 uppercase" id="t-fmtText"></p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Script Logic -->
+    <script>
+        // --- i18n Dictionary ---
+        const translations = {
+            en: {
+                pageTitle: "ETERNAL // QR GENERATOR",
+                marquee: "STATIC ENCRYPTION ENABLED // NO EXPIRATION DATE // UNLIMITED SCANS // ",
+                sysOnline: "System Online",
+                title1: "Eternal",
+                title2: "QR Code",
+                desc: "The URL you enter is directly encoded into the QR matrix. No intermediary redirects. Once generated, the code never expires and <span class='text-white font-bold'>works forever.</span>",
+                inputLabel: "[01] Enter Target Link (URL)",
+                statusLabel: "Status",
+                encLabel: "Encryption",
+                encValue: "STATIC MATRIX",
+                btnText: "[02] Download High-Res",
+                fmtText: "Format: PNG / Color: Acid & Black",
+                statusWaiting: "WAITING...",
+                statusComputing: "COMPUTING...",
+                statusActive: "ACTIVE - READY",
+                statusError: "ERROR OCCURRED",
+                awaitingInput: "AWAITING<br>INPUT",
+                downloaded: "[ DOWNLOADED ]"
+            },
+            tr: {
+                pageTitle: "ETERNAL // QR OLUŞTURUCU",
+                marquee: "STATİK ŞİFRELEME AKTİF // SON KULLANMA TARİHİ YOK // SINIRSIZ TARAMA // ",
+                sysOnline: "Sistem Çevrimiçi",
+                title1: "Eternal",
+                title2: "QR Kod",
+                desc: "Girdiğiniz URL doğrudan karekod matrisine işlenir. Aracı yönlendirmeler yoktur. Kod bir kez oluşturulduktan sonra zaman aşımına uğramaz, <span class='text-white font-bold'>sonsuza kadar çalışır.</span>",
+                inputLabel: "[01] Hedef Bağlantıyı (URL) Girin",
+                statusLabel: "Durum",
+                encLabel: "Şifreleme",
+                encValue: "STATİK MATRİS",
+                btnText: "[02] Yüksek Çözünürlüklü İndir",
+                fmtText: "Format: PNG / Renk: Asit & Siyah",
+                statusWaiting: "BEKLENİYOR...",
+                statusComputing: "HESAPLANIYOR...",
+                statusActive: "AKTİF - HAZIR",
+                statusError: "HATA OLUŞTU",
+                awaitingInput: "GİRDİ<br>BEKLENİYOR",
+                downloaded: "[ İNDİRİLDİ ]"
+            }
+        };
+
+        // Determine browser language
+        const userLang = navigator.language || navigator.userLanguage;
+        const lang = userLang.toLowerCase().startsWith('tr') ? 'tr' : 'en';
+        const t = translations[lang];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply Initial Translations
+            document.title = t.pageTitle;
+            document.documentElement.lang = lang;
+            document.getElementById('marqueeText').textContent = t.marquee.repeat(5);
+            document.getElementById('t-sysOnline').textContent = t.sysOnline;
+            document.getElementById('mainTitle').innerHTML = `${t.title1}<br><span class="text-transparent" style="-webkit-text-stroke: 1px #D4FF00;">${t.title2}</span>`;
+            document.getElementById('t-desc').innerHTML = t.desc;
+            document.getElementById('t-inputLabel').textContent = t.inputLabel;
+            document.getElementById('t-statusLabel').textContent = t.statusLabel;
+            document.getElementById('t-encLabel').textContent = t.encLabel;
+            document.getElementById('t-encValue').textContent = t.encValue;
+            document.getElementById('t-btnText').textContent = t.btnText;
+            document.getElementById('t-fmtText').textContent = t.fmtText;
+            document.getElementById('statusText').textContent = t.statusWaiting;
+            document.getElementById('awaitingText').innerHTML = t.awaitingInput;
+
+            // DOM Elements Setup
+            const input = document.getElementById('urlInput');
+            const qrContainer = document.getElementById('qrContainer');
+            const scannerLine = document.getElementById('scannerLine');
+            const actionPanel = document.getElementById('actionPanel');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const statusText = document.getElementById('statusText');
+
+            let currentQRDataUrl = '';
+            let timeoutId;
+
+            // QR Kod Oluşturma Fonksiyonu
+            const generateQR = (text) => {
+                // Temizle
+                qrContainer.innerHTML = '';
+                
+                if (!text || text.trim() === '') {
+                    // Boş durum
+                    qrContainer.innerHTML = `
+                        <div class="w-full h-full border border-dashed border-gray-800 flex items-center justify-center text-gray-800 font-anton text-4xl text-center leading-none" id="awaitingText">
+                            ${t.awaitingInput}
+                        </div>
+                    `;
+                    qrContainer.classList.remove('opacity-100');
+                    qrContainer.classList.add('opacity-20');
+                    scannerLine.classList.add('hidden');
+                    
+                    actionPanel.classList.add('opacity-50', 'pointer-events-none');
+                    statusText.textContent = t.statusWaiting;
+                    statusText.classList.remove('text-acid');
+                    return;
+                }
+
+                // UI Güncelleme (Aktif)
+                statusText.textContent = t.statusActive;
+                statusText.classList.add('text-acid');
+                qrContainer.classList.remove('opacity-20');
+                qrContainer.classList.add('opacity-100');
+                scannerLine.classList.remove('hidden');
+                actionPanel.classList.remove('opacity-50', 'pointer-events-none');
+
+                // Güvenlik: Kütüphanenin yüklendiğinden emin ol
+                if (typeof QRCode === 'undefined') {
+                    statusText.textContent = t.statusError + " (LIB_MISSING)";
+                    statusText.classList.remove('text-acid');
+                    statusText.classList.add('text-red-500');
+                    return;
+                }
+
+                // Canvas oluştur (yüksek çözünürlük için scale 10)
+                const canvas = document.createElement('canvas');
+                
+                QRCode.toCanvas(canvas, text, {
+                    width: 400,
+                    margin: 2,
+                    color: {
+                        dark: '#D4FF00',    // Asit yeşili QR modülleri
+                        light: '#0a0a0a'    // Koyu arka plan
+                    },
+                    errorCorrectionLevel: 'H' // Yüksek hata düzeltme
+                }, (error) => {
+                    if (error) {
+                        console.error(error);
+                        statusText.textContent = t.statusError;
+                        statusText.classList.remove('text-acid');
+                        statusText.classList.add('text-red-500');
+                        return;
+                    }
+                    
+                    canvas.classList.add('w-full', 'h-full', 'object-contain', 'shadow-2xl');
+                    qrContainer.appendChild(canvas);
+                    
+                    // İndirme için Data URL kaydet
+                    currentQRDataUrl = canvas.toDataURL("image/png");
+                });
+            };
+
+            // Input Dinleyici (Debounce ile yazarken kasmaması için)
+            input.addEventListener('input', (e) => {
+                clearTimeout(timeoutId);
+                const value = e.target.value;
+                
+                // Yazarken ufak bir bekleme efekti
+                if(value.length > 0) {
+                     statusText.textContent = t.statusComputing;
+                }
+                
+                timeoutId = setTimeout(() => {
+                    generateQR(value);
+                }, 300); // 300ms gecikme
+            });
+
+            // İndirme İşlemi
+            downloadBtn.addEventListener('click', () => {
+                if (!currentQRDataUrl) return;
+
+                const link = document.createElement('a');
+                link.download = 'eternal-qr-code.png';
+                link.href = currentQRDataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Buton geri bildirimi
+                const originalText = document.getElementById('t-btnText').textContent;
+                document.getElementById('t-btnText').innerHTML = `<span class="text-black">${t.downloaded}</span>`;
+                setTimeout(() => {
+                    document.getElementById('t-btnText').textContent = originalText;
+                }, 2000);
+            });
+
+            // Başlangıç animasyonu için input'a  focus yap
+            setTimeout(() => {
+                input.focus();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
