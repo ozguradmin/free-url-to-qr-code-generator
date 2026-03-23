@@ -11,7 +11,7 @@ A lightning-fast, highly optimized web application that converts any URL into a 
 - **SEO Optimized:** Fully optimized with proper meta tags, JSON-LD schema, and semantic HTML for high search engine visibility.
 
 ## 🔗 Live Demo
-[Try the Eternal QR Generator](https://free-qr-code-generator.pages.dev/)
+[Try the Eternal QR Generator](https://free-qr-code-generator-b3d.pages.dev/)
 
 ## 🛠️ Built With
 - HTML5 / Vanilla JS
